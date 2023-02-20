@@ -25,3 +25,60 @@ uint8_t ring_buffer_is_empty(ring_buffer_t *buffer);
 uint8_t ring_buffer_is_full(ring_buffer_t *buffer);
 ring_buffer_size_t ring_buffer_num_items(ring_buffer_t *buffer);
 ```
+
+For ringbuffer_any
+---------------------
+
+a new ring buffer is created using the marco `RINGBUFFER_INIT(name, buf)` include `ringbuffer_any.h`
+```c
+struct foo_event {
+    int x;
+    int y;
+};
+
+struct foo_event buf_foo_event[128];
+
+/* init statically */
+RINGBUFFER_INIT(rb, buf_foo_event);
+```
+
+wrapped marco for accessing the ringbuffer
+```c
+#define ring_buffer_push(rb, src) \
+    ring_buffer_queue(rb, &src, sizeof(__typeof(src)));
+
+#define ring_buffer_pop(rb, dst) \
+    ring_buffer_dequeue(rb, &dst, sizeof(__typeof(dst)));
+
+/* an example was given here */
+struct foo_event test_event = {
+    .x = 20,
+    .y = 20,
+};
+
+/* pointer is required */
+ring_buffer_push(&rb, test_event);
+ring_buffer_pop(&rb, test_event);
+```
+
+building a makefile like this:
+```shell
+CC             ?= gcc
+CFLAGS         = -Wall -g -O2 -std=c99
+
+BUILDDIR := ./build
+
+all: build rb_any
+
+build:
+    mkdir -p $(BUILDDIR)
+
+rb_any: ../ringbuffer_any.c rb_any.c
+	$(CC) $(CFLAGS) -o $(BUILDDIR)/$@ $^
+
+.PHONY: clean
+clean:
+    rm -rf $(BUILDDIR)
+```
+
+Actually, just copy `ringbuffer_any.c` and `ringbuffer_any.h` into your project is okay.
